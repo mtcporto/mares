@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <title>Tabela de Marés - Ponta de Tambaú</title>
+  
+
+  
+  <!-- Seus CSS locais -->
+  <link rel="stylesheet" href="./vis-tc.css">
+  <link rel="stylesheet" href="./vis-tooltip.css">
+
+  <!-- Bibliotecas externas (CDN) para o gráfico -->
+  <script 
+    src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"
+    integrity="sha512-M7nHCiNUOwFt6Us3r8alutZLm9qMt4s9951uo8jqO4UwJ1hziseL6O3ndFyigx6+LREfZqnhHxYjKRJ8ZQ69DQ=="
+    crossorigin="anonymous" 
+    referrerpolicy="no-referrer">
+  </script>
+  <script 
+    src="https://cdnjs.cloudflare.com/ajax/libs/luxon/1.26.0/luxon.min.js"
+    integrity="sha512-cYjGoxnM2sxryDRpKhwi8uTszEw2zufuDVz1dWlm1+wlvwnhQ4wu00BokHH4IKlogGJNL+2a2GYvHN+xaoUxjQ=="
+    crossorigin="anonymous" 
+    referrerpolicy="no-referrer">
+  </script>
+
+  <!-- JS locais do gráfico -->
+  <script src="./vis-tooltip.js"></script>
+  <script src="./vis-tc.js"></script>
+</head>
+<style>
+
+:is(.h1,.h2,.h3,.h4,.h5,.h6,h1,h2,h3,h4,h5,h6) {
+    font-family: "Open Sans", sans-serif;
+}
+.mb-0 {
+    margin-bottom: 0 !important;
+}
+.flex-grow-1 {
+    -webkit-box-flex: 1 !important;
+    -ms-flex-positive: 1 !important;
+    flex-grow: 1 !important;
+}
+
+b, strong {
+    font-weight: 600;
+}
+b, strong {
+    font-weight: bolder;
+}
+h2 {
+    font-size: calc(.9rem + .6vw);
+}
+.pb-0 {
+    padding-bottom: 0 !important;
+}
+.p-3 {
+    padding: 1rem !important;
+}
+*, ::after, ::before {
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+}
+figcaption {
+    display: block;
+    unicode-bidi: isolate;
+    font-family: "Open Sans", sans-serif;
+
+}
+.vis-tide-chart {
+    font-family: "Roboto", sans-serif;
+    color: #0c203f;
+    font-size: 0.75rem;
+}
+.vis-tide-chart .tide-area-path {
+    fill: var(--vz-secondary) !important;
+    fill-opacity: 0.25 !important;
+}
+
+:root {vz-primary: #8649c3;
+    --vz-secondary: #ab84c6;
+    --vz-link-color: #8649c3;
+    --vz-link-hover-color: #ab84c6;
+    --vz-primary-rgb: 130, 75, 197;
+    --vz-secondary-rgb: 178, 178, 178;
+    --vz-header-bg-dark: #8649c3;
+    --vz-custom-hover-color: #9d59e2;
+    --vz-accordion-active-color: #8649c3;
+    --vz-primary-bg-subtle: rgba(130, 73, 197, .1);
+    --vz-secondary-bg-subtle: #ededf0;
+    --vz-btn-bg: #8649c3;
+    --vz-body-font-size: 1.125rem;
+    --vz-body-line-height: 2.1rem;
+    --vz-font-sans-serif: "Open Sans", -apple-system, system-ui, BlinkMacSystemFont, sans-serif, Segoe UI, Helvetica, Arial, Apple Color Emoji, Segoe UI Emoji;
+    --vz-body-font-family: var(--vz-font-sans-serif);
+    --vz-breadcrumb-font-size: calc(.7rem + .5vw);
+}
+</style>
+<body>
+  <!-- Exemplo de container Bootstrap -->
+  <div class="container my-4">
+    <div class="card" style="min-height:450px;">
+      <div class="card-header d-flex align-items-center">
+        <h2 class="mb-0 flex-grow-1">Tabela de marés de hoje para Ponta de Tambaú</h2>
+      </div>
+      <figure class="card-body p-0">
+        <div class="table-responsive">
+          <!-- Aqui ficará o gráfico -->
+          <div id="main-chart-container">
+            <div id="tide-chart-container"></div>
+          </div>
+        </div>
+        <figcaption class="p-3 pb-0">
+          <strong>Segunda-feira 17 fevereiro 2025, 17:43 -02 (GMT -0200)</strong>.
+          A maré está subindo em Ponta de Tambaú nesse momento. 
+          Podemos ver que a maré mais alta de 1.96m foi às 06:41 
+          e a maré mais baixa de 0.46m foi às 00:32.
+        </figcaption>
+      </figure>
+    </div>
+  </div>
+
+  <!-- Script que inicializa o gráfico -->
+  <script>
+    const tideData = {
+      unit: "m",
+      currentDate: "2025-02-17",
+      currentTime: "17:43",
+      tide: [
+        { date: "2025-02-16", time: "18:23", value: 1.96 },
+        { date: "2025-02-17", time: "00:32", value: 0.46 },
+        { date: "2025-02-17", time: "06:41", value: 1.96 },
+        { date: "2025-02-17", time: "12:42", value: 0.54 },
+        { date: "2025-02-17", time: "18:53", value: 1.96 },
+        { date: "2025-02-18", time: "01:02", value: 0.57 },
+        { date: "2025-02-18", time: "07:12", value: 1.85 },
+        { date: "2025-02-18", time: "13:16", value: 0.65 },
+        { date: "2025-02-18", time: "19:28", value: 1.8 },
+        { date: "2025-02-19", time: "01:36", value: 0.69 }
+      ],
+      sun: [
+        {
+          date: "2025-02-17",
+          sunrise: "06:22",
+          sunset: "18:43",
+          firstlight: "06:02",
+          lastlight: "19:03"
+        },
+        {
+          date: "2025-02-18",
+          sunrise: "06:22",
+          sunset: "18:43",
+          firstlight: "06:02",
+          lastlight: "19:03"
+        }
+      ]
+    };
+
+    new VisTideChart({
+      id: "tide-chart-container",
+      data: tideData,
+      hideDateAxis: true,
+    });
+  </script>
+
+
+</body>
+</html>

@@ -1,0 +1,84 @@
+.vis-tide-chart {
+  font-family: "Roboto", sans-serif;
+  color: #0c203f;
+  font-size: 0.75rem;
+}
+
+.vis-tide-chart svg {
+  display: block;
+}
+
+.vis-tide-chart .chart-title {
+  font-size: 1.125rem;
+}
+
+.vis-tide-chart .chart-title,
+.vis-tide-chart .label-text {
+  stroke: #fff;
+  stroke-width: 3px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  paint-order: stroke;
+}
+
+.vis-tide-chart .label-g {
+  fill: #168bce;
+}
+
+.vis-tide-chart .label-g.is-low {
+  fill: #e74c3c;
+}
+
+.vis-tide-chart .current-time-line {
+  stroke: #e74c3c;
+}
+
+.vis-tide-chart .axis-g {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+.vis-tide-chart .axis-g line {
+  stroke: #98a6ad;
+}
+
+.vis-tide-chart .background-rect.is-day {
+  fill: #ffffff;
+}
+
+.vis-tide-chart .background-rect.is-light {
+  fill: #f2f5f7;
+}
+
+.vis-tide-chart .background-rect.is-night {
+  fill: #eeeff3;
+}
+
+.vis-tide-chart .tide-area-path {
+  fill: #3383d4;
+  fill-opacity: 0.2;
+}
+
+.vis-tide-chart .tide-line-path {
+  stroke: #3383d4;
+  stroke-width: 2;
+  fill: none;
+}
+
+.vis-tide-chart .tide-circle-shadow {
+  fill: #98a6ad;
+}
+
+.vis-tide-chart .tide-circle {
+  fill: #fff;
+}
+
+.vis-tide-chart .tide-icon {
+  fill: #3383d4;
+}
+
+.vis-tide-chart .current-time-circle {
+  fill: #e74c3c;
+  stroke: #fff;
+  stroke-width: 2;
+}

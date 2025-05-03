@@ -1,0 +1,76 @@
+.vis-tooltip-parent {
+  position: relative;
+}
+
+.vis-tooltip-box {
+  font-size: 0.875rem;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 9999;
+  transition-property: opacity;
+  transition: opacity 0.15s linear;
+}
+
+.vis-tooltip-box.is-visible {
+  opacity: 1;
+}
+
+.vis-tooltip-box[data-placement="top"] > .vis-tooltip-arrow:before {
+  bottom: 6px;
+  left: -6px;
+  border-width: 6px 6px 0;
+  border-top-color: #fff;
+}
+
+.vis-tooltip-box[data-placement="bottom"] > .vis-tooltip-arrow:before {
+  top: -6px;
+  left: -6px;
+  border-width: 0 6px 6px;
+  border-bottom-color: #fff;
+}
+
+.vis-tooltip-box[data-placement="left"] > .vis-tooltip-arrow:before {
+  top: -6px;
+  right: 6px;
+  border-width: 6px 0 6px 6px;
+  border-left-color: #fff;
+}
+
+.vis-tooltip-box[data-placement="right"] > .vis-tooltip-arrow:before {
+  top: -6px;
+  left: -6px;
+  border-width: 6px 6px 6px 0;
+  border-right-color: #fff;
+}
+
+.vis-tooltip-arrow {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 12px;
+  height: 12px;
+  color: #333;
+}
+.vis-tooltip-arrow:before {
+  content: "";
+  position: absolute;
+  border-color: transparent;
+  border-style: solid;
+}
+
+.vis-tooltip-content {
+  position: absolute;
+  left: 0;
+  top: 0;
+  max-width: 100%;
+  background-color: #fff;
+  color: #26323d;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  outline: 0;
+  box-shadow: 0 0 20px 4px rgba(154, 161, 177, 0.15),
+    0 4px 80px -8px rgba(36, 40, 47, 0.25),
+    0 4px 4px -2px rgba(91, 94, 105, 0.15);
+  padding: 0.75em 1rem;
+}

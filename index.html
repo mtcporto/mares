@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>Tábua de Marés</title>
+
+    <!-- Bootstrap e Material Icons -->
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.materialdesignicons.com/5.4.55/css/materialdesignicons.min.css">
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- D3 e Luxon (para VisTideChart) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"
+        integrity="sha512-M7nHCiNUOwFt6Us3r8alutZLm9qMt4s9951uo8jqO4UwJ1hziseL6O3ndFyigx6+LREfZqnhHxYjKRJ8ZQ69DQ=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/luxon/1.26.0/luxon.min.js"
+        integrity="sha512-cYjGoxnM2sxryDRpKhwi8uTszEw2zufuDVz1dWlm1+wlvwnhQ4wu00BokHH4IKlogGJNL+2a2GYvHN+xaoUxjQ=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+
+    <!-- VisTideChart e Tooltip -->
+    <script src="vis-tooltip.js"></script>
+    <script src="vis-tc.js"></script>
+    <link rel="stylesheet" href="vis-tc.css">
+    <link rel="stylesheet" href="vis-tooltip.css">
+
+    <!-- Biblioteca de predição de marés -->
+    <script src="https://unpkg.com/@neaps/tide-predictor@0.1.1/dist/web/tide-predictor.min.js"></script>
+
+    <!-- Weather Icons -->
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/weather-icons/2.0.10/css/weather-icons.min.css">
+
+    <!-- Importação dos Material Symbols -->
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings:
+                'FILL' 1,
+                'wght' 400,
+                'GRAD' 0,
+                'opsz' 48;
+        }
+
+        .icon-large {
+            font-size: 95px !important;
+        }
+
+        .icon-medium {
+            font-size: 36px !important;
+        }
+
+        .tide-low,
+        .tide-high {
+            color: white;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #F5F5DC;
+            /* Offwhite */
+            padding-bottom: 10px;
+        }
+
+        .header {
+            background-color: black;
+            color: white;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .title {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .content {
+            height: 383px;
+            width: 100%;
+            max-width: 1116px;
+            margin: 0 auto;
+        }
+
+        table {
+            width: 100%;
+            margin: 20px 0;
+        }
+
+        .high-tide {
+            color: red;
+        }
+
+        .low-tide {
+            color: teal;
+        }
+
+        .tide-icon {
+            vertical-align: middle;
+        }
+
+        .current-tide {
+            font-weight: bold;
+        }
+
+        td {
+            transition: background-color 0.3s ease;
+        }
+
+        #tide-chart-container {
+            margin-top: 20px;
+        }
+
+
+        /* Estilos para o card (Anexo 2) */
+        .tide-card {
+            position: relative;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            background: linear-gradient(to bottom left, #023a58, #48cae4);
+            color: white;
+            max-width: 100%;
+            transition: transform 0.3s ease;
+            height: 365px;
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 20px;
+            margin-top: 20px;
+            /* Add margin below the card */
+        }
+
+        .tide-card:hover {
+            transform: scale(1.02);
+        }
+
+        .tide-header {
+            display: flex;
+            align-items: flex-start;
+            margin-left: 8%;
+            margin-top: 20px;
+            flex: 0 0 auto;
+        }
+
+        .current-tide {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .current-tide-legend {
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .current-tide-value {
+            font-size: 5rem;
+            font-weight: bold;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .tide-container {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            flex: 1;
+            align-items: center;
+        }
+
+        .tide-item {
+            text-align: center;
+            margin: 5px;
+            padding: 5px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Destaque para o tide-item relacionado à próxima maré */
+        .tide-item.highlight {
+            background-color: yellow !important;
+            /* Fundo amarelo */
+            color: black !important;
+            /* Texto preto */
+            border-radius: 10px;
+            /* Se quiser remover qualquer borda pré-existente, basta usar: border: none !important; */
+        }
+
+        /* Ajusta ícones dentro do highlight para ficarem pretos */
+        .tide-item.highlight .material-symbols-outlined,
+        .tide-item.highlight .wi {
+            color: black !important;
+        }
+
+        .tide-level {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .tide-timestamp {
+            font-size: 0.9em;
+        }
+
+        .tide-arrow {
+            display: inline-block;
+        }
+
+        .tide-arrow.down {
+            color: rgb(255, 111, 0);
+        }
+
+        .tide-arrow.up {
+            color: rgb(255, 255, 0);
+        }
+
+        .moon-phase {
+            position: absolute;
+            right: 10px;
+            font-size: 7.5rem;
+        }
+
+        @media (max-width: 768px) {
+.tide-card {
+    height: 383px;
+    width: 100%;
+    max-width: 1116px;
+    position: relative;
+    border: 1px solid #ccc;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    background: linear-gradient(to bottom left, #023a58, #48cae4);
+    color: white;
+    transition: transform 0.3sease;
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 20px;
+    margin-top: 20px;
+    margin: 0 auto;
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+            .current-tide {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start; /* Alinha tudo à esquerda */
+    padding-left: 10px; /* Espaço de 10px da borda */
+    text-align: left; /* Garante que o texto fique alinhado à esquerda */
+}
+
+.current-tide-value {
+    display: flex;
+    flex-direction: column;
+    text-align: left; /* Garante que o texto também fique alinhado à esquerda */
+    align-items: flex-start; /* Alinha os itens à esquerda */
+}
+
+            .icon-large {
+            font-size: 80px !important;
+            }
+            .tide-card {
+                margin: 10px;
+                padding: 15px;
+                height: 365px;
+            }
+
+                .tide-header {
+        margin-left: 0;
+        justify-content: left;
+            }
+
+            .tide-container {
+                display: flex;
+                justify-content: space-around;
+                width: 100%;
+            }
+
+            .tide-level {
+            font-size: 1.0em;
+            font-weight: bold;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            }
+            .tide-item {
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-around;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header">
+        <h1>Tábua de Marés</h1>
+    </div>
+
+    <div class="content">
+        <!-- Card com as próximas marés -->
+        <div class="tide-card">
+            <!-- Espaço para o ícone da fase da lua -->
+            <div class="moon-phase">
+                <!-- Será atualizado via script -->
+            </div>
+            <div class="tide-header">
+                <div class="current-tide">
+                    <div class="current-tide-legend">Nível Atual da Maré</div>
+                    <div class="current-tide-value">
+                        <span class="material-symbols-outlined icon-large">water</span>
+                    </div>
+                    
+                </div>
+            </div>
+            <div class="tide-container">
+                <!-- Itens para as próximas 4 marés -->
+                <div class="tide-item">
+                    <span class="material-symbols-outlined icon-medium tide-low">water</span>
+                    <div class="tide-level">
+                        0.0 m
+                        <i class="wi wi-direction-down tide-arrow down"></i>
+                    </div>
+                    <div class="tide-timestamp">00:00</div>
+                </div>
+                <div class="tide-item">
+                    <span class="material-symbols-outlined icon-medium tide-high">waves</span>
+                    <div class="tide-level">
+                        0.0 m
+                        <i class="wi wi-direction-up tide-arrow up"></i>
+                    </div>
+                    <div class="tide-timestamp">00:00</div>
+                </div>
+                <div class="tide-item">
+                    <span class="material-symbols-outlined icon-medium tide-high">waves</span>
+                    <div class="tide-level">
+                        0.0 m
+                        <i class="wi wi-direction-up tide-arrow up"></i>
+                    </div>
+                    <div class="tide-timestamp">00:00</div>
+                </div>
+                <div class="tide-item">
+                    <span class="material-symbols-outlined icon-medium tide-high">waves</span>
+                    <div class="tide-level">
+                        0.0 m
+                        <i class="wi wi-direction-up tide-arrow up"></i>
+                    </div>
+                    <div class="tide-timestamp">00:00</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="title">
+            <h2>Próximos 5 dias</h2>
+        </div>
+
+        <!-- Tabela com as marés dos próximos 5 dias -->
+        <table class="table table-striped">
+            <thead class="thead-dark">
+                <tr>
+                    <th>Dia</th>
+                    <th>1ª Maré</th>
+                    <th>2ª Maré</th>
+                    <th>3ª Maré</th>
+                    <th>4ª Maré</th>
+                </tr>
+            </thead>
+            <tbody id="tide-table-body">
+                <!-- Linhas inseridas via JS -->
+            </tbody>
+        </table>
+
+        <!-- Gráfico VisTideChart com as marés de HOJE -->
+        <div id="tide-chart-container"></div>
+    </div>
+
+    <script>
+        // === CONFIGURAÇÃO DOS CONSTITUINTES E OFFSETS ===
+        const constituents = [
+            { name: 'M2', amplitude: 0.79, phase_GMT: 124.0, speed: 28.984105 },
+            { name: 'S2', amplitude: 0.28, phase_GMT: 142.0, speed: 30.0 },
+            { name: 'N2', amplitude: 0.17, phase_GMT: 114.0, speed: 28.439730 },
+            { name: 'K1', amplitude: 0.05, phase_GMT: 235.0, speed: 15.041069 },
+            { name: 'O1', amplitude: 0.05, phase_GMT: 163.0, speed: 15.04107 },
+            { name: 'P1', amplitude: 0.02, phase_GMT: 228.0, speed: 14.958932 },
+            { name: 'Q1', amplitude: 0.01, phase_GMT: 276.0, speed: 13.398661 },
+            { name: 'K2', amplitude: 0.08, phase_GMT: 137.0, speed: 30.082138 },
+            { name: 'NO1', amplitude: 0.02, phase_GMT: 163.0, speed: 13.398660 },
+            { name: 'J1', amplitude: 0.02, phase_GMT: 288.0, speed: 15.0 },
+            { name: 'OO1', amplitude: 0.01, phase_GMT: 213.0, speed: 16.139101 }
+        ];
+
+        // Offsets para horário e altura (baseados em observações locais)
+        const timeOffset = {
+            high: -10, // minutos para maré alta
+            low: 18 // minutos para maré baixa
+        };
+        const heightOffset = {
+            high: 1.5, // metros para maré alta
+            low: 1.35 // metros para maré baixa
+        };
+
+        // Ajusta os constituintes para manter phases no intervalo 0..360
+        const adjustedConstituents = constituents.map(c => ({
+            ...c,
+            phase_GMT: c.phase_GMT % 360
+        }));
+
+        // === QUANDO A PÁGINA CARREGAR, INICIA A PREDIÇÃO ===
+        document.addEventListener('DOMContentLoaded', initTidePrediction);
+
+        function initTidePrediction() {
+            luxon.Settings.defaultLocale = 'pt';
+
+            // Data/hora local atual
+            const now = luxon.DateTime.local();
+            const hojeISO = now.toISODate();
+            const inicioHoje = now.startOf('day');
+            const fimHoje = now.endOf('day');
+
+            // Obter as marés para os próximos 5 dias
+            const startJS = inicioHoje.toJSDate();
+            const endJS = new Date(startJS.getTime() + 5 * 24 * 60 * 60 * 1000);
+
+            // Cria o predictor e obtém as marés (altas/baixas)
+            const predictor = tidePredictor(adjustedConstituents, { phaseKey: 'phase_GMT' });
+            const tides = predictor.getExtremesPrediction({ start: startJS, end: endJS });
+
+            // Estruturas para preencher a tabela e o gráfico
+            const tableBody = document.getElementById('tide-table-body');
+            const tidesByDay = {}; // Agrupar marés por dia
+            let graphTideData = []; // Marés só do dia de hoje (para o gráfico)
+
+            // Ícones para maré alta/baixa
+            const iconHigh = '<span class="mdi mdi-triangle high-tide tide-icon" title="maré alta"></span>';
+            const iconLow = '<svg xmlns="https://www.w3.org/2000/svg" viewBox="0 0 24 24" height="16" style="fill: teal;"><title>triangle-down</title><path d="M1 3H23L12 22"></path></svg>';
+
+            // === Processa cada evento de maré ===
+            tides.forEach(tide => {
+                // Converte a data para Luxon (horário local)
+                let dt = luxon.DateTime.fromJSDate(tide.time, { zone: 'local' });
+
+                // Aplica offsets de horário/altura
+                if (tide.high) {
+                    dt = dt.plus({ minutes: timeOffset.high });
+                    tide.level += heightOffset.high;
+                } else {
+                    dt = dt.plus({ minutes: timeOffset.low });
+                    tide.level += heightOffset.low;
+                }
+
+                // Formata hora/altura
+                const formattedTime = dt.toFormat("HH:mm");
+                const formattedHeight = tide.level < 1
+                    ? tide.level.toFixed(2) + " m"
+                    : tide.level.toFixed(1) + " m";
+
+                // === Preenche a tabela (todas as marés dos próximos 5 dias) ===
+                const dayISO = dt.toISODate();
+                if (!tidesByDay[dayISO]) {
+                    tidesByDay[dayISO] = [];
+                }
+                tidesByDay[dayISO].push({
+                    time: formattedTime,
+                    height: formattedHeight,
+                    icon: tide.high ? iconHigh : iconLow,
+                    dateTime: dt, // Guarda o objeto DateTime completo
+                    level: tide.level,
+                    high: tide.high
+                });
+
+                // === Se a maré é do dia de hoje, adiciona ao array do gráfico ===
+                if (dt >= inicioHoje && dt <= fimHoje) {
+                    graphTideData.push({
+                        date: dayISO,
+                        time: formattedTime,
+                        value: tide.level
+                    });
+                }
+            });
+
+            // === Preenche a Tabela ===
+            // Ordena as chaves (dias) em ordem cronológica
+            const sortedDays = Object.keys(tidesByDay).sort((a, b) => a.localeCompare(b));
+            sortedDays.forEach(dayISO => {
+                // Ordena os eventos pelo horário (HH:mm)
+                tidesByDay[dayISO].sort((a, b) => a.time.localeCompare(b.time));
+
+                // Extra info (dia do mês e dia da semana)
+                const dt = luxon.DateTime.fromISO(dayISO);
+                const dayNumber = dt.day;
+                const weekday = dt.toFormat('ccc');
+                const dayName = weekday.charAt(0).toUpperCase() + weekday.slice(1);
+
+                // Monta a linha com até 4 marés
+                let rowHTML = `<tr>
+                <td style="text-align:left;">${dayNumber} (${dayName})</td>`;
+
+                for (let i = 0; i < 4; i++) {
+                    if (tidesByDay[dayISO][i]) {
+                        const ev = tidesByDay[dayISO][i];
+                        rowHTML += `<td>${ev.time} | ${ev.height} ${ev.icon}</td>`;
+                    } else {
+                        rowHTML += `<td></td>`;
+                    }
+                }
+                rowHTML += '</tr>';
+                tableBody.innerHTML += rowHTML;
+            });
+
+            // === Prepara dados para o gráfico (só hoje) ===
+            // Ordena pelo horário
+            graphTideData.sort((a, b) => a.time.localeCompare(b.time));
+
+            // Se houver menos de 2 pontos, o VisTideChart não tem muito o que exibir,
+            // mas vamos prosseguir mesmo assim
+            if (graphTideData.length >= 2) {
+                // Adiciona pontos "dummy" no início (00:00) e no fim (23:59)
+                // para que a biblioteca não descarte a primeira e a última maré real.
+                const firstValue = graphTideData[0].value;
+                const lastValue = graphTideData[graphTideData.length - 1].value;
+                const firstDate = graphTideData[0].date;
+                const lastDate = graphTideData[graphTideData.length - 1].date;
+
+                // Dummy inicial e final
+                const dummyStart = {
+                    date: firstDate,
+                    time: "00:00",
+                    value: firstValue
+                };
+                const dummyEnd = {
+                    date: lastDate,
+                    time: "23:59",
+                    value: 1.0 // Valor menor para a curva cair
+                };
+
+                // "Incha" o array
+                graphTideData = [dummyStart, ...graphTideData, dummyEnd];
+            }
+
+            // Monta o objeto final para o VisTideChart
+            const tideDataForGraph = {
+                unit: "m",
+                currentDate: hojeISO,
+                currentTime: now.toFormat("HH:mm"),
+                tide: graphTideData,
+                sun: [] // Se tiver dados de nascer/pôr do sol, inclua aqui
+            };
+
+            // === Renderiza o gráfico VisTideChart ===
+            new VisTideChart({
+                id: "tide-chart-container",
+                data: tideDataForGraph,
+                hideDateAxis: true, // ex: se quiser mostrar só horas
+                hideTimeAxis: false // ex: se quiser mostrar datas, troque para 'true'
+            });
+
+            // === Atualiza o card (Anexo 2) com os mesmos dados ===
+            updateTideCard(tidesByDay);
+
+            // === Atualiza o ícone da fase da lua para o dia de hoje ===
+            updateMoonPhase();
+        }
+
+
+        function updateTideCard(tidesByDay) {
+    const now = luxon.DateTime.local();
+
+    // Combina as marés de todos os dias em um único array
+    let allTides = Object.values(tidesByDay).flat();
+
+    // Filtra as marés do dia atual e mantém a ordem original
+    let todayTides = allTides.filter(tide => 
+        tide.dateTime.toISODate() === now.toISODate()
+    );
+
+    // Encontra a maré mais próxima do horário atual
+    let closestTide = null;
+    let minDiff = Infinity;
+
+    todayTides.forEach(tide => {
+        const diff = Math.abs(tide.dateTime.diff(now).as('minutes'));
+        if (diff < minDiff) {
+            minDiff = diff;
+            closestTide = tide;
+        }
+    });
+
+    // Pega as primeiras 4 marés do dia, mantendo a ordem original
+    let nextTides = todayTides.slice(0, 4);
+
+    // Formata o nível da maré
+    function formatTideLevel(level) {
+        return level < 1 ? level.toFixed(2) : level.toFixed(1);
+    }
+
+    // Atualiza o cabeçalho com a maré mais próxima
+    const currentTideValueEl = document.querySelector('.current-tide-value');
+    if (closestTide) {
+        currentTideValueEl.innerHTML = `
+            <span class="material-symbols-outlined icon-large">
+                ${closestTide.high ? 'waves' : 'water'}
+            </span>
+            ${formatTideLevel(closestTide.level)} m
+        `;
+    } else {
+        currentTideValueEl.innerHTML = `
+            <span class="material-symbols-outlined icon-large">water</span>
+            --
+        `;
+    }
+
+    // Atualiza os itens do card com as marés
+    const tideItems = document.querySelectorAll('.tide-item');
+    tideItems.forEach((item, index) => {
+        if (index < nextTides.length) {
+            const tide = nextTides[index];
+            const iconEl = item.querySelector('.material-symbols-outlined');
+            const levelEl = item.querySelector('.tide-level');
+            const timestampEl = item.querySelector('.tide-timestamp');
+
+            iconEl.textContent = tide.high ? 'waves' : 'water';
+            levelEl.innerHTML = `
+                ${formatTideLevel(tide.level)} m
+                <i class="wi ${tide.high ? 'wi-direction-up tide-arrow up' : 'wi-direction-down tide-arrow down'}"></i>
+            `;
+            timestampEl.textContent = tide.time;
+
+            // Aplica o destaque apenas se esta for a maré mais próxima
+            if (tide === closestTide) {
+                item.classList.add('highlight');
+            } else {
+                item.classList.remove('highlight');
+            }
+        } else {
+            // Limpa os itens restantes se não houver marés suficientes
+            item.classList.remove('highlight');
+            item.querySelector('.material-symbols-outlined').textContent = 'water';
+            item.querySelector('.tide-level').innerHTML = '0.0 m';
+            item.querySelector('.tide-timestamp').textContent = '00:00';
+        }
+    });
+}
+
+        // === Função que consulta a Farmsense Moon Phase API e atualiza o ícone da lua ===
+        function updateMoonPhase() {
+            const now = luxon.DateTime.local();
+            const timestamp = Math.floor(now.toSeconds());
+            const moonApiUrl = `https://api.farmsense.net/v1/moonphases/?d=${timestamp}`;
+
+            fetch(moonApiUrl)
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.length > 0) {
+                        const phaseInfo = data[0];
+                        const moonPhase = phaseInfo.Phase;
+                        const iconClass = getMoonIconClass(moonPhase);
+                        const simplePhase = simplifyMoonPhase(moonPhase);
+                        const moonPhaseDiv = document.querySelector('.moon-phase');
+                        moonPhaseDiv.innerHTML = `<i class="wi ${iconClass}" title="${simplePhase}"></i>`;
+                    }
+                })
+                .catch(error => console.error("Erro ao buscar a fase da lua:", error));
+        }
+
+        // Mapeia a fase retornada pela API para um ícone dos Weather Icons
+        function getMoonIconClass(phase) {
+            if (phase === 'New Moon') {
+                return 'wi-moon-new';
+            } else if (phase === 'Full Moon') {
+                return 'wi-moon-full';
+            } else if (phase.includes('Waxing')) {
+                return 'wi-moon-waxing-crescent-3';
+            } else if (phase.includes('Waning')) {
+                return 'wi-moon-waning-crescent-3';
+            } else {
+                return 'wi-moon-new';
+            }
+        }
+
+        // Função para simplificar a fase da lua (para o title)
+        function simplifyMoonPhase(phase) {
+            if (phase === 'New Moon') {
+                return 'Nova';
+            } else if (phase === 'Full Moon') {
+                return 'Cheia';
+            } else if (phase.includes('Waxing')) {
+                return 'Crescente';
+            } else if (phase.includes('Waning')) {
+                return 'Minguante';
+            }
+            return phase;
+        }
+
+    </script>
+
+    <!-- Popper/Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+
+</html>

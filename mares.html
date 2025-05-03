@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tabela de Marés - Tambau</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .header {
+            background-color: black;
+            color: white;
+            padding: 10px 0;
+            text-align: center;
+        }
+        .container {
+            margin-top: 20px;
+        }
+        table {
+            width: 100%;
+            margin: 20px 0;
+        }
+        th, td {
+            padding: 10px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Tabela de Marés - Tambau</h1>
+    </div>
+    <div class="container">
+        <div class="form-group">
+            <label for="siteSelect">Selecione a Praia:</label>
+            <select id="siteSelect" class="form-control" onchange="fetchTides()">
+                <option value="Tambau, Brazil">Tambau</option>
+                <option value="Recife, Brazil">Recife</option>
+                <option value="Fortaleza, Brazil">Fortaleza</option>
+                <!-- Adicione outras opções conforme necessário -->
+            </select>
+        </div>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Dia</th>
+                    <th>1ª Maré</th>
+                    <th>2ª Maré</th>
+                    <th>3ª Maré</th>
+                    <th>4ª Maré</th>
+                </tr>
+            </thead>
+            <tbody id="tideTable">
+                <!-- Dados serão inseridos aqui -->
+            </tbody>
+        </table>
+    </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", fetchTides);
+
+        async function fetchTides() {
+            const site = document.getElementById("siteSelect").value;
+            const url = `https://cors.mosaicoworkers.workers.dev/tide.arthroinfo.org/tideshow.cgi?site=${encodeURIComponent(site)};type=table;gx=640;gy=240;caltype=ndp;interval=00:01;glen=7;fontsize=%2B0;units=meters;killsun=1;comment=1;tzone=local;ampm24=24;colortext=black;colordatum=white;colormsl=yellow;colortics=red;colorday=skyblue;colornight=deep-skyblue;colorebb=seagreen;colorflood=blue`;
+
+            try {
+                const response = await fetch(url);
+                const text = await response.text();
+                const tableStart = text.indexOf("<pre>") + 5;
+                const tableEnd = text.indexOf("</pre>");
+                const tableText = text.slice(tableStart, tableEnd).trim();
+                const lines = tableText.split("\n").slice(3); // Skip the first 3 lines
+
+                const data = parseTideData(lines);
+                updateTable(data);
+            } catch (error) {
+                console.error("Erro ao buscar dados de maré:", error);
+            }
+        }
+
+        function parseTideData(lines) {
+            const data = [];
+            let currentDay = null;
+            lines.forEach(line => {
+                const parts = line.split(/\s+/);
+                if (parts.length < 6) return;
+
+                const date = parts[0];
+                const time = parts[2];
+                const level = parts[4];
+                const tideType = parts[5];
+
+                const day = new Date(date).toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric' });
+
+                if (!currentDay || currentDay.day !== day) {
+                    currentDay = { day, tides: [] };
+                    data.push(currentDay);
+                }
+
+                currentDay.tides.push(`[ ${time} ] ${level} m (${tideType})`);
+            });
+            return data;
+        }
+
+        function updateTable(data) {
+            const tableBody = document.getElementById("tideTable");
+            tableBody.innerHTML = "";
+
+            data.forEach(dayData => {
+                const row = document.createElement("tr");
+
+                const dayCell = document.createElement("td");
+                dayCell.textContent = dayData.day;
+                row.appendChild(dayCell);
+
+                for (let i = 0; i < 4; i++) {
+                    const tideCell = document.createElement("td");
+                    tideCell.textContent = dayData.tides[i] || "";
+                    row.appendChild(tideCell);
+                }
+
+                tableBody.appendChild(row);
+            });
+        }
+    </script>
+</body>
+</html>
